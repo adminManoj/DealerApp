@@ -1,0 +1,261 @@
+CREATE DATABASE Ecommerce_Portal;
+USE Ecommerce_Portal;
+
+CREATE TABLE Users(ID INT IDENTITY(1,1) PRIMARY KEY, UserName VARCHAR(100), Email VARCHAR(100), 
+Password VARCHAR(100), CreatedON DATETIME, IsActive INT);
+
+CREATE TABLE Category(ID INT IDENTITY(1,1) PRIMARY KEY, Name VARCHAR(100), CreatedOn DATETIME, IsActive INT);
+
+CREATE TABLE SubCategory(ID INT IDENTITY(1,1) PRIMARY KEY, CategoryID INT, Name VARCHAR(100), 
+CreatedOn DATETIME, IsActive INT);
+
+CREATE TABLE Products(ID INT IDENTITY(1,1) PRIMARY KEY, CategoryID INT, SubCategoryID INT, Name VARCHAR(100), 
+Price DECIMAL(18,2), AvailableQuantity INT, MinimumOrderQuantity INT, Image VARCHAR(500), 
+CreatedOn DATETIME, IsActive INT);	  
+
+CREATE TABLE Distributor(ID INT IDENTITY(1,1) PRIMARY KEY, Name VARCHAR(100),Email VARCHAR(100), 
+Password VARCHAR(100), CreatedOn DATETIME, IsActive INT);	  
+
+CREATE TABLE DistributorSubCategoryMapping(ID INT IDENTITY(1,1) PRIMARY KEY, SubCategoryID INT, DistributorID INT, 
+CreatedOn DATETIME, IsActive INT);	  
+
+CREATE TABLE Cart(ID INT IDENTITY(1,1) PRIMARY KEY, ProductID INT, UserID INT, Quantity INT, CreatedOn DATETIME, 
+IsActive INT);
+
+CREATE TABLE Orders(ID INT IDENTITY(1,1) PRIMARY KEY, OrderNo VARCHAR(100), UserID INT, 
+CreatedOn DATETIME, IsActive INT);
+
+CREATE TABLE OrderDetails(ID INT IDENTITY(1,1) PRIMARY KEY, OrderID INT, ProductID INT, Quantity INT, Price DECIMAL(18,2)
+,TotalPrice DECIMAL(18,2) ,CreatedOn DATETIME);
+
+SELECT * FROM Users;
+SELECT * FROM Category;
+SELECT * FROM SubCategory;
+SELECT * FROM Products;
+SELECT * FROM Distributor;
+SELECT * FROM DistributorSubCategoryMapping;
+SELECT * FROM Cart;
+SELECT * FROM Orders;
+SELECT * FROM OrderDetails;
+
+CREATE PROC sp_registration @Username VARCHAR(100), @Email VARCHAR(100), @Password VARCHAR(100)
+, @ErrorOutput VARCHAR(100) OUTPUT
+AS
+BEGIN
+	IF NOT EXISTS ( SELECT 1 FROM Users WHERE Email = @Email)
+	BEGIN
+		INSERT INTO Users(UserName,Email,Password,IsActive,CreatedON)
+		VALUES(@Username,@Email,@Password,1,GETDATE());
+		SET @ErrorOutput = 'User added successfully';
+	END
+	ELSE
+	BEGIN
+		SET @ErrorOutput = 'User already exists.';
+	END
+END
+
+CREATE PROC sp_login @Email VARCHAR(100), @Password VARCHAR(100), @ErrorOutput VARCHAR(100) OUTPUT
+AS
+BEGIN
+	IF EXISTS (SELECT 1 FROM Users WHERE Email = @Email AND Password = @Password)
+	BEGIN		
+		SET @ErrorOutput = 'Valid user';
+	END
+	ELSE
+	BEGIN
+		SET @ErrorOutput = 'Invalid user';
+	END
+END
+
+CREATE PROC sp_category @Id INT, @Name VARCHAR(100), @ActionType VARCHAR(100) , @ErrorOutput VARCHAR(100) OUTPUT
+AS
+BEGIN
+    IF @ActionType = 'ADD'
+	BEGIN
+		IF NOT EXISTS ( SELECT 1 FROM Category WHERE Name = @Name)
+		BEGIN
+			INSERT INTO Category(Name,IsActive,CreatedON)
+			VALUES(@Name,1,GETDATE());
+			SET @ErrorOutput = 'Category added successfully';
+		END
+		ELSE
+		BEGIN
+			SET @ErrorOutput = 'Category already exists.';
+		END
+	END
+	IF @ActionType = 'GETALL'
+	BEGIN
+		SELECT * FROM Category WHERE IsActive = 1;
+	END
+	IF @ActionType = 'GETBYID'
+	BEGIN
+		SELECT * FROM Category WHERE IsActive = 1 AND ID = @Id;
+	END
+	IF @ActionType = 'DELETE'
+	BEGIN
+		DELETE FROM Category WHERE ID = @ID;
+		SET @ErrorOutput = 'Category deleted successfully';
+	END
+	IF @ActionType = 'UPDATE'
+	BEGIN
+		IF EXISTS ( SELECT 1 FROM Category WHERE ID = @Id)
+		BEGIN
+			UPDATE Category SET Name = @Name WHERE ID = @Id;
+			SET @ErrorOutput = 'Category updated successfully';
+		END
+		ELSE
+		BEGIN
+			SET @ErrorOutput = 'Category does not exists.';
+		END
+	END
+END
+
+CREATE PROC sp_subcategory @Id INT, @CategoryId INT, @Name VARCHAR(100), @ActionType VARCHAR(100) 
+,@ErrorOutput VARCHAR(100) OUTPUT
+AS
+BEGIN
+    IF @ActionType = 'ADD'
+	BEGIN
+		IF NOT EXISTS ( SELECT 1 FROM SubCategory WHERE CategoryID = @CategoryId AND Name = @Name)
+		BEGIN
+			INSERT INTO SubCategory(CategoryID,Name,IsActive,CreatedON)
+			VALUES(@CategoryId,@Name,1,GETDATE());
+			SET @ErrorOutput = 'SubCategory added successfully';
+		END
+		ELSE
+		BEGIN
+			SET @ErrorOutput = 'SubCategory already exists.';
+		END
+	END
+	IF @ActionType = 'GETALL'
+	BEGIN
+		SELECT S.ID, S.Name, S.CategoryID ,C.CreatedOn FROM SubCategory S INNER JOIN Category C 
+		ON S.CategoryID = C.ID
+		WHERE S.IsActive = 1;
+	END
+	IF @ActionType = 'GETBYID'
+	BEGIN
+		SELECT S.ID, S.Name, S.CategoryID ,C.CreatedOn FROM SubCategory S INNER JOIN Category C 
+		ON S.CategoryID = C.ID WHERE S.IsActive = 1 AND S.ID = @Id;
+	END
+	IF @ActionType = 'DELETE'
+	BEGIN
+		DELETE FROM SubCategory WHERE ID = @ID;
+		SET @ErrorOutput = 'SubCategory deleted successfully';
+	END
+	IF @ActionType = 'UPDATE'
+	BEGIN
+		IF EXISTS ( SELECT 1 FROM SubCategory WHERE ID = @Id)
+		BEGIN
+			UPDATE SubCategory SET CategoryID = @CategoryId , Name = @Name WHERE ID = @Id;
+			SET @ErrorOutput = 'SubCategory updated successfully';
+		END
+		ELSE
+		BEGIN
+			SET @ErrorOutput = 'SubCategory does not exists.';
+		END
+	END
+END
+
+CREATE PROC sp_distributor @Id INT, @Name VARCHAR(100) ,@Email VARCHAR(100) 
+,@Password VARCHAR(100) ,@ActionType VARCHAR(100) ,@ErrorOutput VARCHAR(100) OUTPUT
+AS
+BEGIN
+    IF @ActionType = 'ADD'
+	BEGIN
+		IF NOT EXISTS ( SELECT 1 FROM Distributor WHERE Email = @Email)
+		BEGIN
+			INSERT INTO Distributor(Name,Email,Password,CreatedON,IsActive)
+			VALUES(@Name,@Email,@Password,GETDATE(),1);
+			SET @ErrorOutput = 'Distributor added successfully';
+		END
+		ELSE
+		BEGIN
+			SET @ErrorOutput = 'Distributor already exists.';
+		END
+	END
+	IF @ActionType = 'GETALL'
+	BEGIN
+		SELECT * FROM Distributor WHERE IsActive = 1;
+	END
+	IF @ActionType = 'GETBYID'
+	BEGIN
+		SELECT * FROM Distributor WHERE IsActive = 1 AND ID = @Id;
+	END
+	IF @ActionType = 'DELETE'
+	BEGIN
+		DELETE FROM Distributor WHERE ID = @ID;
+		SET @ErrorOutput = 'Distributor deleted successfully';
+	END
+	IF @ActionType = 'UPDATE'
+	BEGIN
+		IF EXISTS ( SELECT 1 FROM Distributor WHERE ID = @Id)
+		BEGIN
+			UPDATE Distributor SET Name = @Name ,Email = @Email ,Password=@Password WHERE ID = @Id;
+			SET @ErrorOutput = 'Distributor updated successfully';
+		END
+		ELSE
+		BEGIN
+			SET @ErrorOutput = 'Distributor does not exists.';
+		END
+	END
+END
+
+CREATE PROC sp_product @Id INT, @CategoryId INT, @SubCategoryId INT, @Name VARCHAR(100) ,@Price DECIMAL(18,2) 
+,@AvailableQty INT ,@MinQty INT ,@Image VARCHAR(100),@ActionType VARCHAR(100) ,@ErrorOutput VARCHAR(100) OUTPUT
+AS
+BEGIN
+    IF @ActionType = 'ADD'
+	BEGIN
+		IF NOT EXISTS ( SELECT 1 FROM Products WHERE CategoryID = @CategoryId AND SubCategoryID = @SubCategoryId
+		AND Name = @Name)
+		BEGIN
+			INSERT INTO Products(CategoryID, SubCategoryID, Name,Price,AvailableQuantity,MinimumOrderQuantity
+			,Image,CreatedON,IsActive)
+			VALUES(@CategoryId,@SubCategoryId,@Name,@Price,@AvailableQty,@MinQty,@Image,GETDATE(),1);
+			SET @ErrorOutput = 'Product added successfully';
+		END
+		ELSE
+		BEGIN
+			SET @ErrorOutput = 'Product already exists.';
+		END
+	END
+	IF @ActionType = 'GETALL'
+	BEGIN
+		SELECT P.ID, P.CategoryID, P.SubCategoryID, P.Name, P.Price, P.AvailableQuantity, P.MinimumOrderQuantity,
+	    P.Image, C.Name AS Category, S.Name as SubCategory
+		FROM Products P 
+		INNER JOIN Category C ON C.ID = P.CategoryID
+		INNER JOIN SubCategory S ON S.ID = P.SubCategoryID
+		WHERE P.IsActive = 1;
+	END
+	IF @ActionType = 'GETBYID'
+	BEGIN
+		SELECT P.ID, P.CategoryID, P.SubCategoryID, P.Name, P.Price, P.AvailableQuantity, P.MinimumOrderQuantity,
+	    P.Image, C.Name AS Category, S.Name as SubCategory
+		FROM Products P 
+		INNER JOIN Category C ON C.ID = P.CategoryID
+		INNER JOIN SubCategory S ON S.ID = P.SubCategoryID
+		WHERE P.IsActive = 1 AND P.ID = @Id;
+	END
+	IF @ActionType = 'DELETE'
+	BEGIN
+		DELETE FROM Products WHERE ID = @ID;
+		SET @ErrorOutput = 'Product deleted successfully';
+	END
+	IF @ActionType = 'UPDATE'
+	BEGIN
+		IF EXISTS ( SELECT 1 FROM Products WHERE ID = @Id)
+		BEGIN
+			UPDATE Products SET Name = @Name ,CategoryID = @CategoryId, 
+			SubCategoryID = @SubCategoryId, Price = @Price, AvailableQuantity = @AvailableQty,
+			MinimumOrderQuantity = @MinQty, Image = @Image 			
+			WHERE ID = @Id AND IsActive = 1;
+			SET @ErrorOutput = 'Product updated successfully';
+		END
+		ELSE
+		BEGIN
+			SET @ErrorOutput = 'Product does not exists.';
+		END
+	END
+END
