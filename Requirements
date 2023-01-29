@@ -1,0 +1,156 @@
+Three Modules =>
+
+1 Admin =>
+
+2 Distributor =>
+
+3 End User =>
+
+Database =>
+
+Tables :
+
+1) Users 
+2) Category
+3) Sub Category
+4) Product
+5) Distributor
+6) Sub Category Assignment to Distributor
+7) Cart 
+8) Order
+9) Order Details
+
+
+Web API :
+
+1) Registration
+2) Login
+3) Category (Add / Edit / Delete / Get All / Get By Id)
+4) Sub Category (Add / Edit / Delete / Get All / Get By Id)
+5) Product (Add / Edit / Delete / Get All / Get By Id)
+6) Distributor (Add / Edit / Delete / Get All / Get By Id)
+7) Add / Remove Sub Category Assignment to Distributor
+8) Cart Add / Remove / Get All Items
+9) Order ( Order Details ) Placement / Get All / Get By ID
+
+
+React JS :
+
+Admin Panel :
+
+1) Login
+2) Header
+3) Dashboard
+4) Category Master ( CRUD )
+5) Sub Category Master ( CRUD )
+6) Product Master ( CRUD )
+7) Distributor Master ( CRUD )
+8) Sub Category - Distributor Mapping
+
+Distributor Panel :
+
+1) Login
+2) Header
+3) Dashboard
+4) Search Product - Add to cart 
+5) View Cart and Place Order
+6) View Orders / Order details
+
+Ecommerce Site :
+
+1) Home Page ( Website )
+1) Registration
+2) Login
+3) Header ( Menu )
+4) Dashboard
+5) Search Product - Add to cart 
+6) View Cart and Place Order
+7) View Orders / Order details
+
+
+
+
+https://www.wallpaperbetter.com/en/hd-wallpaper-fsswl/download/2560x1440
+
+
+https://www.c-sharpcorner.com/article/solution-non-nullable-property-must-contain-a-non-null-value-in-net-6/
+
+
+https://stackoverflow.com/questions/47279947/idx10603-the-algorithm-hs256-requires-the-securitykey-keysize-to-be-greater
+https://www.c-sharpcorner.com/article/authentication-and-authorization-in-asp-net-core-web-api-with-json-web-tokens/
+
+https://www.w3schools.com/bootstrap/tryit.asp?filename=trybs_navbar_dropdown&stacked=h
+
+import React from 'react'
+
+function NavBar() {
+    const menu = [
+        {
+            "Menu": "Dashboard"
+        },
+        {
+            "Menu": "Distributor",
+            "Pages": [
+                {
+                    "Name": "Add Distributor"
+                },
+                {
+                    "Name": "View Distributor"
+                }
+            ]
+        },
+        {
+            "Menu": "User",
+            "Pages": [
+                {
+                    "Name": "Add User"
+                },
+                {
+                    "Name": "View User"
+                }
+            ]
+        }
+    ]
+    return (
+        <div>
+            <nav className="navbar navbar-inverse">
+                <div className="container-fluid">
+                    <div className="navbar-header">
+                        <a className="navbar-brand" href="#">WebSiteName</a>
+                    </div>
+                    <ul className="nav navbar-nav">
+                        {
+                            menu.map((item, index) => {
+                                return (
+                                    <>
+                                        <li key={index} className="active">
+                                            {
+                                                item.Pages?.length > 0 ?
+                                                    <>
+                                                        <a className="dropdown-toggle" data-toggle="dropdown" href="#">{item.Menu} <span className="caret"></span></a>
+                                                        <ul class="dropdown-menu">
+                                                            {item.Pages.map((page, idx) => {
+                                                                return (
+                                                                    <li key={idx}><a href="#">{page.Name}</a></li>
+                                                                )
+                                                            })}
+                                                        </ul>
+                                                    </>
+                                                    :
+                                                    <a href="#">{item.Menu}</a>
+                                            }
+                                        </li>
+                                    </>
+                                )
+                            })
+                        }
+                    </ul>
+                </div>
+            </nav>
+
+        </div>
+    )
+}
+
+export default NavBar
+
