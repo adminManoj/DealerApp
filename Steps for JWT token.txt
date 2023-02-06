@@ -1,0 +1,179 @@
+Hello everyone, this is Manoj and welcome back to my youtube channel. In today's video I am going to discuss about one of the most important topic of 
+asp.net core web api which is JWT token. 
+
+So what is JWT?
+
+JSON Web Tokens (commonly known as JWT) is an open standard to pass data between client and server, and enables you to transmit data back and forth 
+between the server and the consumers in a secure manner. 
+
+open image of JWT
+
+JWT is a combination of three sections:
+
+1) Header
+This section provides metadata about the type of data and the algorithm to be used to encrypt the data that is to be transferred.
+
+2) Payload
+The payload represents the actual information in JSON format that is to be transmitted over the wire. The code snippet given below illustrates a simple payload.
+
+3) Signature
+
+The signature adheres to the JSON Web Signature (JWS) specification and is used to verify the integrity of the data transferred over the wire.
+
+So, till now enough theoretical knowlodge. Let's start the practical approach by creating a new project.
+
+1) Create .net Core project
+
+2) Install package => Microsoft.AspNetCore.Authentication.JwtBearer
+
+3) Program.cs
+
+The first step is to configure JWT based authentication in our project. To do this, we need to register a JWT authentication schema by using "AddAuthentication" 
+method and specifying JwtBearerDefaults.AuthenticationScheme. Here, we configure the authentication schema with JWT bearer options.
+
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Issuer"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        };
+    });
+
+app.UseAuthentication();
+
+Here, I have given the parameters which must be taken into account to consider JWT as valid. As per our code, the following items consider a 
+token valid:
+
+Now let's understand this code step by step.
+
+(ValidateIssuer = true) => Validate the server  that generates the token.
+
+(ValidateAudience = true) => Validate the recipient of the token is authorized to receive 
+
+(ValidateLifetime = true) => Check if the token is not expired and the signing key of the issuer is valid 
+
+(ValidateIssuerSigningKey = true) => Validate signature of the token 
+
+Additionally, we specify the values for the issuer, audience, signing key. 
+
+
+Now, let's store these values in appsettings.json file.
+
+
+4) 
+add Jwt info in appSettings.json
+
+"Jwt": {
+    "Issuer": "https://connectedprogrammer.com",
+    "Audience": "https://connectedprogrammer.com",
+    "Key": "ABCEDEFNHKOLOKIJUHY!@@@###",
+  }
+  
+  5) Add UserModel.cs
+
+public string UserName { get; set; }
+	public string Password { get; set; }
+
+6) Let's create a controller and a method within the controller, which is responsible to generate the JWT. 
+
+LoginController => Api Controller
+
+using Microsoft.AspNetCore.Authorization;    
+using Microsoft.Extensions.Configuration;  
+using Microsoft.IdentityModel.Tokens; 
+using System.IdentityModel.Tokens.Jwt;    
+using System.Security.Claims;    
+using System.Text;    
+
+private IConfiguration _config;    
+
+public LoginController(IConfiguration config)    
+{    
+	_config = config;    
+}    
+    
+Let's create a "AuthenticateUser" method, which will be responsible to validate the user credential. 
+	
+private UserModel AuthenticateUser(UserModel login)    
+{    
+UserModel user = null;    
+
+//Validate the User Credentials    
+//Demo Purpose, I have Passed HardCoded User Information    
+if (login.Username == "Manoj" && login.Password == "12345")    
+{    
+	user = new UserModel { Username = "Manoj Deshwal", EmailAddress = "test@gmail.com" };    
+}    
+return user;    
+}  
+
+As of now, I have returned the hardcode model if the username is "Manoj" and Password os 12345. If this method returns the user model, 
+then API generates the new token. Later on , I will create the database logic and connect this with a database and use the real user information
+instead of this dummy information.
+
+Let's create a method to generate the token.
+
+private string GenerateToken(UserModel userInfo)    
+{    
+	var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));    
+	var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);    
+
+	var token = new JwtSecurityToken(_config["Jwt:Issuer"],    
+	  _config["Jwt:Issuer"],    
+	  null,    
+	  expires: DateTime.Now.AddMinutes(1),    
+	  signingCredentials: credentials);    
+
+	return new JwtSecurityTokenHandler().WriteToken(token);    
+}    	
+
+Now, let's create a Login Method. 
+I will mark this method with the AllowAnonymous attribute to bypass the authentication. 
+And, this method will expect the Usermodel object for Username and Password.
+
+[AllowAnonymous]    
+[HttpPost]    
+public IActionResult Login([FromBody]UserModel login)    
+{    
+	IActionResult response = Unauthorized();    
+	var user = AuthenticateUser(login);    
+
+	if (user != null)    
+	{    
+		var tokenString = GenerateJSONWebToken(user);    
+		response = Ok(new { token = tokenString });    
+	}    
+
+	return response;    
+}   
+
+Build and run and try to generate the token. 
+
+
+Now let's create another controller and methods to test this token.
+
+EmployeeController
+
+[Authorize]
+[HttpGet]
+public string GetData()
+{
+	return "This is working with validation";
+}
+
+[HttpPost]
+public string AddData(User user)
+{
+	return "User added with " + user.UserName;
+}
+
