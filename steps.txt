@@ -1,0 +1,81 @@
+Microsoft.Visualstudio.Web.Codegeneration.Design
+
+1)
+
+Register.cshtml.cs public class SampleAppUser : IdentityUser
+{
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+}
+
+2)
+
+ public class SampleDBContext : IdentityDbContext<SampleAppUser>
+{
+    public SampleDBContext(DbContextOptions<SampleDBContext> options)
+        : base(options)
+    {
+    }
+        
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+        // Customize the ASP.NET Identity model and override the defaults if needed.
+        // For example, you can rename the ASP.NET Identity table names and more.
+        // Add your customizations after calling base.OnModelCreating(builder);
+        builder.ApplyConfiguration(new ApplicationUserEntityConfiguration());
+    }
+}
+
+internal class ApplicationUserEntityConfiguration : IEntityTypeConfiguration<SampleAppUser>
+{
+    public void Configure(EntityTypeBuilder<SampleAppUser> builder)
+    {
+        builder.Property(x => x.FirstName).HasMaxLength(100);
+        builder.Property(x => x.LastName).HasMaxLength(100);
+    }
+}
+
+3) Register.cshtml.cs
+
+ [Required]
+            [StringLength(255, ErrorMessage ="Max 255 characters are allowed")]
+            [Display(Name = "FirstName")]
+            public string FirstName { get; set; }
+
+            [Required]
+            [StringLength(255, ErrorMessage = "Max 255 characters are allowed")]
+            [Display(Name = "Lastname")]
+            public string Lastname { get; set; }
+			
+			
+4)  Register.cshtml
+
+ <div class="form-floating">
+                <input asp-for="Input.FirstName" class="form-control" autocomplete="firstname" aria-required="true" />
+                <label asp-for="Input.FirstName"></label>
+                <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+            </div>
+            <div class="form-floating">
+                <input asp-for="Input.Lastname" class="form-control" autocomplete="lastname" aria-required="true" />
+                <label asp-for="Input.Lastname"></label>
+                <span asp-validation-for="Input.Lastname" class="text-danger"></span>
+            </div>
+			
+			
+5) Run and show the html fields and try to save and show error.
+
+6) Register.cshtml.cs
+
+   public async Task<IActionResult> OnPostAsync(string returnUrl = null)
+   
+    user.FirstName = Input.FirstName;
+    user.LastName = Input.Lastname;
+	
+	
+run and save user and show table 
+
+	
+
+
+			
