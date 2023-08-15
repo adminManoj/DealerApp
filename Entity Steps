@@ -1,0 +1,69 @@
+Step 1 :
+
+using Microsoft.EntityFrameworkCore;
+
+public class MyDbContext : DbContext
+    {
+        public MyDbContext(DbContextOptions<MyDbContext> options) : base(options)
+        {
+
+        }
+        public DbSet<Users> users { get; set; }
+        public DbSet<Product> products { get; set; }
+    }
+	
+Step 2 :
+
+"ConnectionStrings": {
+    "DBCS": "Data Source=DESKTOP-2EN9JEA;Initial Catalog=VirtualClassManagement; Integrated Security=true"
+  },
+
+
+Step 3 :
+
+public interface IUserRepository
+    {
+        Users Login(Users user);
+        void Registration(Users user);
+        void Save();
+    }
+
+ public class UserService : IUserRepository
+    {
+        private readonly MyDbContext _dbContext;
+        public UserService(MyDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+
+        public Users GetUserById(int id)
+        {
+            return _dbContext.users.Find(id);
+        }
+
+        public Users Login(Users user)
+        {
+            return _dbContext.users.Where(x => x.Email == user.Email && x.Password == user.Password).FirstOrDefault();
+        }
+
+        public void Registration(Users user)
+        {
+            _dbContext.users.Add(user);
+            Save();
+        }
+
+        public void Save()
+        {
+            _dbContext.SaveChanges();
+        }       
+    }	
+
+Controller :-
+
+ private readonly IUserRepository _userRepository;
+        public UsersController(IUserRepository userRepository)
+        {
+            this.userRepository = userRepository;
+        }	
+	
+	
