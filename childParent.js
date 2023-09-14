@@ -48,14 +48,16 @@ function App() {
   ]);
 
  const toggleItem = (item: Item) => {  
-    const index = items.findIndex(x => x.id === item.id);
+   const itemsCopy = Object.assign([], items);
+    const index = itemsCopy.findIndex(x => x.id === item.id);
     if (item.checked === true) {
-      items[index].checked = true;
+      itemsCopy[index].checked = true;
     }
     else {
-      items[index].checked = false;
+      itemsCopy[index].checked = false;
     }
-    setItems(Object.assign([], items));
+   
+    setItems(itemsCopy));
   };
 
 
